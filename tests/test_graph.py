@@ -45,3 +45,14 @@ def test_build_two_cycle_graph():
     sample_graph = cd.labeled_two_cycles_graph(n, m , labels=labels)
     assert is_graphs_equal(my_graph, sample_graph)
 
+
+def test_build_and_save_two_cycle_graph():
+    n = 8
+    m = 10
+    labels = ("A", "B")
+    filename = "saved_graph"
+    my_graph = build_and_save_two_cycle_graph(n, m, labels, filename)
+    sample_graph = cd.labeled_two_cycles_graph(n, m , labels=labels)
+    assert is_graphs_equal(my_graph, sample_graph)
+    assert "saved_graph" in os.listdir('.')
+    os.remove("saved_graph")
