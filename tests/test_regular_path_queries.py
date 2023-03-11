@@ -5,6 +5,7 @@ from pyformlang.regular_expression import Regex
 
 from project import regular_path_queries as rpq, graph_utils, fsm
 
+
 def get_sample_fa():
     states = [State(0), State(1)]
     fa = NondeterministicFiniteAutomaton()
@@ -18,6 +19,7 @@ def get_sample_fa():
         ]
     )
     return fa
+
 
 def get_sampel_fa2():
     states = [State(0), State(1), State(2), State(3)]
@@ -36,6 +38,8 @@ def get_sampel_fa2():
         ]
     )
     return fa
+
+
 def test_intersection_with_empty_fa():
     fa = get_sample_fa()
     empty_fa = NondeterministicFiniteAutomaton()
@@ -43,11 +47,13 @@ def test_intersection_with_empty_fa():
     result = rpq.intersect(fa, empty_fa)
     assert expected.is_equivalent_to(result)
 
+
 def test_self_intersection():
     fa = get_sampel_fa2()
     expected = fa.get_intersection(fa)
     result = rpq.intersect(fa, fa)
     assert expected.is_equivalent_to(result)
+
 
 def test_intersection():
     fa = get_sampel_fa2()
@@ -55,5 +61,3 @@ def test_intersection():
     expected = fa.get_intersection(fa1)
     result = rpq.intersect(fa, fa1)
     assert expected.is_equivalent_to(result)
-
-
