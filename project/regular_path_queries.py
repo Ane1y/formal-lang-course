@@ -1,8 +1,9 @@
+from typing import Dict
 
 from pyformlang.finite_automaton import NondeterministicFiniteAutomaton, Symbol, State, EpsilonNFA
 from scipy import sparse
 from scipy.sparse import dok_matrix, kron, coo_matrix, csr_matrix
-def decompose_fa(fa: EpsilonNFA) -> (dict[str, dok_matrix], dict[State, int]):
+def decompose_fa(fa: EpsilonNFA) -> (Dict[str, dok_matrix], Dict[State, int]):
     """
     Decomposition of FA as a dictionary: key is symbol, value is transition matrix for x
     :param fa: finite automaton
