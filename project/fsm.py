@@ -9,7 +9,7 @@ import networkx as nx
 
 def regex_to_dfa(regex: re.Regex) -> fa.DeterministicFiniteAutomaton:
     nfa = regex.to_epsilon_nfa()
-    return nfa.minimize().to_deterministic()
+    return nfa.minimize()
 
 
 # Используя возможности pyformlang реализовать функцию построения недетерминированного конечного автомата по графу,
