@@ -2,7 +2,8 @@ import tempfile
 
 from pyformlang.cfg import CFG
 
-import wcnf
+from project.wcnf import cfg_to_wcnf, read_from_file
+
 
 def test_cfg_to_wcnf():
     gr = CFG.from_text(
@@ -11,7 +12,7 @@ def test_cfg_to_wcnf():
         B -> b
         C -> c"""
     )
-    cfg_wcnf = wcnf.cfg_to_wcnf(gr)
+    cfg_wcnf = cfg_to_wcnf(gr)
     expected = CFG.from_text(
         """
         B -> b
@@ -25,7 +26,7 @@ def test_cfg_to_wcnf():
 
 
 def test_read_from_file():
-    gr = wcnf.read_from_file("test_grammar.txt")
+    gr = read_from_file("test_grammar.txt")
     actual = gr.to_text()
 
     expected = """
