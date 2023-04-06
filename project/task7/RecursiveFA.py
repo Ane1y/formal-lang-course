@@ -4,7 +4,7 @@ from pyformlang.cfg import Variable
 from pyformlang.finite_automaton import DeterministicFiniteAutomaton as DFA
 
 from project.fsm import regex_to_dfa
-from task7.ecfg import ExtendedContextFreeGrammatic as ECFG
+from project.task7.ecfg import ExtendedContextFreeGrammatic as ECFG
 
 
 #     Реализовать тип для представления рекурсивных конечных автоматов. В качестве составных частей можно использовать
@@ -12,6 +12,7 @@ from task7.ecfg import ExtendedContextFreeGrammatic as ECFG
 #     рекурсивные конечные автоматы будут использоваться в алгоритмах КС достижимости, основанных на линейной алгебре,
 #     а значит необходимо будет строить матрицы смежности. Здесь могут быть полезны результаты домашних работ по
 #     конечным автоматам.
+
 
 class RecursiveFA:
     class Box:
@@ -22,7 +23,11 @@ class RecursiveFA:
         def minimize(self):
             self.dfa = self.dfa.minimize()
 
-    def __init__(self, start_symbol: Variable, boxes: Iterable[Box],):
+    def __init__(
+        self,
+        start_symbol: Variable,
+        boxes: Iterable[Box],
+    ):
         self.start_symbol = start_symbol
         self.boxes = boxes
 
@@ -36,7 +41,9 @@ class RecursiveFA:
 
     @staticmethod
     def from_ecfg(ecfg: ECFG) -> "RecursiveFA":
-        boxes = [RecursiveFA.Box(p.head, regex_to_dfa(p.body)) for p in ecfg.productions]
+        boxes = [
+            RecursiveFA.Box(p.head, regex_to_dfa(p.body)) for p in ecfg.productions
+        ]
         return RecursiveFA(start_symbol=ecfg.start_symbol, boxes=boxes)
 
     @staticmethod
@@ -47,5 +54,4 @@ class RecursiveFA:
     @staticmethod
     def from_file(path: str, start_symbol="S") -> "RecursiveFA":
         with open(path) as f:
-            return RecursiveFA.from_text(f.read(),
-                                               start_symbol=start_symbol)
+            return RecursiveFA.from_text(f.read(), start_symbol=start_symbol)
