@@ -28,7 +28,6 @@ def test_cfg_to_wcnf():
 def test_read_from_file():
     gr = read_from_file("tests/test_grammar.txt")
     actual = gr.to_text()
-
     expected = """
 S -> A b S
 A -> 
