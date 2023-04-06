@@ -3,7 +3,7 @@ from typing import Iterable
 from pyformlang.cfg import Variable
 from pyformlang.finite_automaton import DeterministicFiniteAutomaton as DFA
 
-from fsm import regex_to_dfa
+from project.fsm import regex_to_dfa
 from task7.ecfg import ExtendedContextFreeGrammatic as ECFG
 
 
