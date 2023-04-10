@@ -9,7 +9,10 @@ from pyformlang.regular_expression import Regex
 
 
 class ExtendedContextFreeGrammatic:
+
     class Production:
+        """Store production for grammatic
+            """
         def __init__(self, head: Variable, body: Regex):
             self.head = head
             self.body = body
@@ -28,12 +31,21 @@ class ExtendedContextFreeGrammatic:
         self.productions = productions if productions else set()
 
     def to_text(self) -> str:
+        """String representation of ecfg
+        """
         return "\n".join(str(p) for p in self.productions)
 
     @staticmethod
     def from_text(
         text: str, start_symbol=Variable("S")
     ) -> "ExtendedContextFreeGrammatic":
+        """
+        Creates grammatic from text of production
+        :param text: should be formed as "S -> a b v"
+        :param start_symbol: start symbol for ecfg
+        :return: ecfg by given prodictions
+        """
+
         variables = set()
         productions = set()
 
@@ -65,6 +77,11 @@ class ExtendedContextFreeGrammatic:
 
     @staticmethod
     def from_file(path: str, start_symbol: str = "S") -> "ExtendedContextFreeGrammatic":
+        """
+        :param path: path to file with productions
+        :param start_symbol: start symbol
+        :return: ecfg from given productions
+        """
         with open(path) as f:
             return ExtendedContextFreeGrammatic.from_text(
                 f.read(), start_symbol=start_symbol
@@ -72,6 +89,11 @@ class ExtendedContextFreeGrammatic:
 
     @staticmethod
     def from_cfg(cfg: CFG) -> "ExtendedContextFreeGrammatic":
+        """
+        Returns ecfg from cfg
+        :param cfg:
+        :return: ecfg from cfg
+        """
         productions = {}
 
         for p in cfg.productions:
