@@ -3,7 +3,7 @@ import tempfile
 
 import pytest
 
-from boolMatrix import BoolMatrix
+from project.boolMatrix import BoolMatrix
 from project.fsm import regex_to_dfa
 from project.task7.ecfg import ExtendedContextFreeGrammatic as ECFG
 from project.task7.RecursiveFA import RecursiveFA as RFA
