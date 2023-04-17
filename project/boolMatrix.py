@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from pyformlang.finite_automaton import State
+from pyformlang.finite_automaton import State, NondeterministicFiniteAutomaton
 from pyformlang.cfg import Variable
-import pycubool as cb
+from scipy import sparse
 
 from task7.RecursiveFA import RecursiveFA
 
@@ -14,6 +14,7 @@ class BoolMatrix(ABC):
         self.bool_matrices = {}
         self.state_indices = {}
         self.states_to_box_variable = {}
+
     def get_states(self):
         return self.state_indices.keys()
 
@@ -105,4 +106,5 @@ class BoolMatrix(ABC):
 
     @staticmethod
     def _create_bool_matrix(shape):
-        return cb.Matrix.empty(shape)
+        return sparse.dok_matrix(shape, dtype=bool)
+
