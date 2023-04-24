@@ -8,6 +8,7 @@ from project.fsm import regex_to_dfa
 from project.task7.ecfg import ExtendedContextFreeGrammatic as ECFG
 from project.task7.RecursiveFA import RecursiveFA as RFA
 
+
 @pytest.mark.parametrize(
     """text""",
     (
@@ -64,10 +65,11 @@ def test_from_file():
     finally:
         os.remove(path)
 
+
 def test_bool_matrix():
     rfa = RFA.from_text("""S -> a b""", "S")
     mat = BoolMatrix.from_rfa(rfa)
     assert len(mat.bool_matrices) == 2
-    assert 'b' in mat.bool_matrices
-    assert 'a' in mat.bool_matrices
+    assert "b" in mat.bool_matrices
+    assert "a" in mat.bool_matrices
     print(mat)

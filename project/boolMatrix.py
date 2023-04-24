@@ -24,7 +24,6 @@ class BoolMatrix(ABC):
     def get_final_states(self):
         return self.final_states.copy()
 
-
     @classmethod
     def from_rfa(cls, rfa: RecursiveFA):
         bm = cls()
@@ -61,7 +60,6 @@ class BoolMatrix(ABC):
         return State(f"{state.value}#{box_var.value}")
 
     def _create_box_bool_matrices(self, box: RecursiveFA.Box):
-
         bool_matrices = {}
 
         for s_from, trans in box.dfa.to_dict().items():
@@ -107,4 +105,3 @@ class BoolMatrix(ABC):
     @staticmethod
     def _create_bool_matrix(shape):
         return sparse.dok_matrix(shape, dtype=bool)
-

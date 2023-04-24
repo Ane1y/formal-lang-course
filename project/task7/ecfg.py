@@ -9,10 +9,9 @@ from pyformlang.regular_expression import Regex
 
 
 class ExtendedContextFreeGrammatic:
-
     class Production:
-        """Store production for grammatic
-            """
+        """Store production for grammatic"""
+
         def __init__(self, head: Variable, body: Regex):
             self.head = head
             self.body = body
@@ -31,8 +30,7 @@ class ExtendedContextFreeGrammatic:
         self.productions = productions if productions else set()
 
     def to_text(self) -> str:
-        """String representation of ecfg
-        """
+        """String representation of ecfg"""
         return "\n".join(str(p) for p in self.productions)
 
     @staticmethod

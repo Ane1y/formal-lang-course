@@ -18,6 +18,7 @@ class RecursiveFA:
         """
         Stores unit of recursive fa
         """
+
         def __init__(self, variable: Variable = None, dfa: DFA = None):
             self.variable = variable
             self.dfa = dfa
@@ -36,6 +37,7 @@ class RecursiveFA:
     ):
         self.start_symbol = start_symbol
         self.boxes = boxes
+
     def set_start_symbol(self, start_symbol: Variable):
         self.start_symbol = start_symbol
 
@@ -85,4 +87,3 @@ class RecursiveFA:
         """
         with open(path) as f:
             return RecursiveFA.from_text(f.read(), start_symbol=start_symbol)
-
