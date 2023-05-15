@@ -34,22 +34,22 @@ INT: [0-9]+;
 SET: '{' '}' | '{' ELEM (',' ELEM)* '}';
 ELEM: INT | INT '..' INT;
 QUOTES: '"';
-IDENT : [a-zA-Z_][a-zA-Z_0-9]*;
+IDENT : [a-zA-Z][a-zA-Z_0-9]*;
 STRING: QUOTES (IDENT | INT | ' ' | '.')* QUOTES;
 SPACE : [ \r\t\n]+ -> skip;
 
 
 prog : (stmt DEL)* EOF;
-stmt : bind | print | expr;
+stmt : bind | print | expr | lambda;
 
 bind : VAR var ASSIGN expr;
 print : PRINT expr;
+pattern : var | LP pattern (',' pattern)* RP;
+lambda : pattern ARROW expr | LP lambda RP;
 
 var : IDENT;
 val : INT | STRING | SET;
 
-pattern : var | LP pattern (',' pattern)* RP;
-lambda : pattern ARROW expr | LP lambda RP;
 
 expr : LP expr RP
   | var
