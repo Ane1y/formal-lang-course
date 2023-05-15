@@ -28,6 +28,12 @@ jobs:
           python -m pip install --upgrade pip wheel setuptools
           python -m pip install -r requirements.txt
           python -m pip list
+
+      - name: Build parser
+
+        run: |
+          sudo apt install antlr4
+          antlr4 -Dlanguage=Python3 -visitor ./project/grammar/Grammar.g4
       - name: Run pytest
         run: |
           pytest
