@@ -32,8 +32,8 @@ jobs:
       - name: Build parser
 
         run: |
-          sudo apt install antlr4=4.12.0
-          antlr4 -Dlanguage=Python3 -visitor ./project/grammar/Grammar.g4
+          curl https://www.antlr.org/download/antlr-4.12.0-complete.jar          
+          ./antlr4 -Dlanguage=Python3 -visitor ./project/grammar/Grammar.g4
       - name: Run pytest
         run: |
           pytest
