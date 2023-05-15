@@ -40,12 +40,12 @@ SPACE : [ \r\t\n]+ -> skip;
 
 
 prog : (stmt DEL)* EOF;
-stmt : bind | print | expr | lambda;
+stmt : bind | print_expr | expr | lambda_expr;
 
 bind : VAR var ASSIGN expr;
-print : PRINT expr;
+print_expr : PRINT expr;
 pattern : var | LP pattern (',' pattern)* RP;
-lambda : pattern ARROW expr | LP lambda RP;
+lambda_expr : pattern ARROW expr | LP lambda_expr RP;
 
 var : IDENT;
 val : INT | STRING | SET;
@@ -54,8 +54,8 @@ val : INT | STRING | SET;
 expr : LP expr RP
   | var
   | val
-  | MAP lambda expr
-  | FILTER lambda expr
+  | MAP lambda_expr expr
+  | FILTER lambda_expr expr
   | expr AND expr                  // пересечение языков
   | expr OR expr                  // объединение языков
   | expr CONCAT expr                 // конкатенация
