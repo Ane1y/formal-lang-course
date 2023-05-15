@@ -4,7 +4,7 @@ import networkx as nx
 from pyformlang.cfg import CFG, Variable
 from scipy import sparse
 
-from wcnf import cfg_to_wcnf
+from project.wcnf import cfg_to_wcnf
 
 
 def hellings(graph: nx.MultiDiGraph, cfg: CFG) -> Set[Tuple]:

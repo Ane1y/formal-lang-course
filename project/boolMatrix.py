@@ -3,7 +3,7 @@ from pyformlang.finite_automaton import State, NondeterministicFiniteAutomaton
 from pyformlang.cfg import Variable
 from scipy import sparse
 
-from task7.RecursiveFA import RecursiveFA
+from project.task7.RecursiveFA import RecursiveFA
 
 
 class BoolMatrix(ABC):
