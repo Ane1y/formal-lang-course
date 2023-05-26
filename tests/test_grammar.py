@@ -1,8 +1,9 @@
+import filecmp
 import sys
 
 import pytest
 
-from project.grammar.grammar import check
+from project.grammar.grammar import check, generate_dot_description
 
 
 @pytest.mark.parametrize(
@@ -74,3 +75,10 @@ def test_set_start(txt, accepted):
 )
 def test_load(txt, accepted):
     assert check(text=txt) == accepted
+
+
+def test_generate_dot_description():
+    generate_dot_description("""set_start get_vertices g of g1;
+    map x -> x | 5 g1;""", "tmp.dot")
+    filecmp.cmp("tmp.dot", "right.dot")
+
