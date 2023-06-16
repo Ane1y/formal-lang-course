@@ -1,7 +1,7 @@
 name: Run pytest
 
 on:
-  [ push, pull_request ]
+  [ push ]
 
 jobs:
 
@@ -28,6 +28,11 @@ jobs:
           python -m pip install --upgrade pip wheel setuptools
           python -m pip install -r requirements.txt
           python -m pip list
+
+
+      - name: Generate ANTLR4 files
+        run: |
+          antlr4 -Dlanguage=Python3 -visitor ./project/grammar/Grammar.g4
       - name: Run pytest
         run: |
           pytest
