@@ -4,7 +4,7 @@ from pyformlang.finite_automaton import (
     NondeterministicFiniteAutomaton,
     Symbol,
     State,
-    EpsilonNFA,
+    EpsilonNFA, Epsilon,
 )
 from scipy import sparse
 from scipy.sparse import dok_matrix, kron, coo_matrix, csr_matrix
@@ -85,10 +85,74 @@ def intersect(fa1: EpsilonNFA, fa2: EpsilonNFA) -> EpsilonNFA:
 
     return result
 
+def union(fa1: EpsilonNFA, fa2: EpsilonNFA) -> EpsilonNFA:
+    """
+    Computes the union of two finite automata
 
-#  На основе предыдущей функции реализовать функцию выполнения регулярных запросов к графам:
-#  по графу с заданными стартовыми и финальными вершинами и регулярному выражению вернуть те пары
-#  вершин из заданных стартовых и финальных, которые связанны путём, формирующем слово из языка,
-#  задаваемого регулярным выражением.
-#
-#     Для конструирования регулярного запроса и преобразований графа использовать результаты Задачи 2.
+    `fa1`: First finite automaton
+    `fa2`: Second finite automaton
+    :return: The union of two finite automatas
+    """
+    fa = EpsilonNFA()
+
+    for fro, symb, to in fa1:
+        assert isinstance(fro, State)
+        assert isinstance(to, State)
+        fa.add_transition((1, fro.value), symb, (1, to.value))
+
+    for fro, symb, to in fa2:
+        assert isinstance(fro, State)
+        assert isinstance(to, State)
+        fa.add_transition((2, fro.value), symb, (2, to.value))
+
+    for node in fa1.start_states:
+        assert isinstance(node, State)
+        fa.add_start_state((1, node.value))
+
+    for node in fa2.start_states:
+        assert isinstance(node, State)
+        fa.add_start_state((2, node.value))
+
+    for node in fa1.final_states:
+        assert isinstance(node, State)
+        fa.add_final_state((1, node.value))
+
+    for node in fa2.final_states:
+        assert isinstance(node, State)
+        fa.add_final_state((2, node.value))
+
+    return fa
+
+def concat(fa1: EpsilonNFA, fa2: EpsilonNFA) -> EpsilonNFA:
+    """
+    Computes the concatenation of two finite automata
+
+    `fa1`: First finite automaton
+    `fa2`: Second finite automaton
+    :return: The concatenation of two finite automatas
+    """
+    fa = EpsilonNFA()
+
+    for fro, symb, to in fa1:
+        assert isinstance(fro, State)
+        assert isinstance(to, State)
+        fa.add_transition((1, fro.value), symb, (1, to.value))
+
+    for fro, symb, to in fa2:
+        assert isinstance(fro, State)
+        assert isinstance(to, State)
+        fa.add_transition((2, fro.value), symb, (2, to.value))
+
+    for node in fa1.start_states:
+        assert isinstance(node, State)
+        fa.add_start_state((1, node.value))
+
+        for node2 in fa2.final_states:
+            assert isinstance(node2, State)
+            fa.add_transition((1, node.value), Epsilon(), (2, node2.value))
+
+    for node in fa2.final_states:
+        assert isinstance(node, State)
+        fa.add_final_state((1, node.value))
+
+    return fa
