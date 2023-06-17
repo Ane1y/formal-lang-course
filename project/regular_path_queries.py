@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Set, Tuple, Any
 
 from pyformlang.finite_automaton import (
     NondeterministicFiniteAutomaton,
@@ -168,3 +168,35 @@ def get_transitive_closure(fa: EpsilonNFA) -> EpsilonNFA:
         for f in fa.final_states:
             fa.add_transition(f, Epsilon(), s)
     return fa
+
+
+def find_reachable_mat(fa: EpsilonNFA, matrices: Dict[Any, dok_matrix]) -> Set[Tuple[Any, Any]]:
+    flat = None
+    for mat in matrices.values():
+        if flat is None:
+            flat = mat
+            continue
+        flat |= mat
+    if flat is None:
+        return set()
+
+    prev = 0
+    while flat.count_nonzero() != prev:
+        prev = flat.count_nonzero()
+        flat += flat @ flat
+
+    from_idx, to_idx = flat.nonzero()
+    return set(zip(from_idx, to_idx))
+
+
+def find_reachable(fa: EpsilonNFA) -> Set[Tuple[Any, Any]]:
+    matrices, state_idx, _ = decompose_fa(fa)
+    reachable = find_reachable_mat(fa, matrices)
+    rev_idx = {i: k for k, i in state_idx.items()}
+    result = set()
+    for fro, to in reachable:
+        fro_id = rev_idx[fro]
+        to_id = rev_idx[to]
+        if fro_id in fa.start_states and to_id in fa.final_states:
+            result.add((fro_id.value, to_id.value))
+    return result

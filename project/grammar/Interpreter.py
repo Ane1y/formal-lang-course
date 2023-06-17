@@ -1,8 +1,9 @@
 import io
+from dataclasses import dataclass
 
 import networkx as nx
 from antlr4 import *
-from typing import TextIO
+from typing import TextIO, Tuple
 
 from pyformlang.finite_automaton import EpsilonNFA, State, Symbol
 
@@ -11,7 +12,8 @@ from grammar.antlr.GrammarParser import GrammarParser
 from grammar.antlr.GrammarVisitor import GrammarVisitor
 from grammar import Grammar
 from grammar.Grammar import parse_stream
-from regular_path_queries import intersect, union, concat, get_transitive_closure
+from regular_path_queries import intersect, union, concat, get_transitive_closure, find_reachable
+
 
 
 class Interpreter(GrammarVisitor):
@@ -36,14 +38,30 @@ class Interpreter(GrammarVisitor):
             return self.memory[name]
         return 0
 
-    def visitSet(self, ctx):
-        tmp = set()
-        split = ctx.getText()[1:-1].split(',')
-        if split[0] != "":
-            for elem in split:
-                tmp.add(int(elem))
-        return frozenset(tmp)
+    def visitLiteral(self, ctx:GrammarParser.LiteralContext) -> int | str:
+        # ура управление на исключениях!!
+        # хорошо, что я пишу на питоне
+        try:
+            return int(ctx.getText())
+        except:
+            return ctx.getText()
 
+    def visitsetElemLiteral(self, ctx: GrammarParser.SetElemLiteralContext) -> int | str:
+        return self.visit(ctx.children[0])
+
+    def visitSetElemRange(self, ctx:GrammarParser.SetElemRangeContext) -> Tuple[int, int]:
+        return self.visit(ctx.children[0]), self.visit(ctx.children[2])
+
+    def visitSet(self, ctx: GrammarParser.SetContext) -> frozenset:
+        vals = set()
+        for child in ctx.children[1:-1:2]:
+            x = self.visit(child)
+            if isinstance(x, tuple):
+                for i in range(x[0], x[1] + 1):
+                    vals.add(i)
+            else:
+                vals.add(x)
+        return frozenset(vals)
     def visitVal(self, ctx):
         if ctx.literal():
             return self.visit(ctx.literal())
@@ -51,6 +69,8 @@ class Interpreter(GrammarVisitor):
             return self.visit(ctx.set_())
         else:
             raise TypeError(f"Invalid type {type(ctx)}")
+
+
 
     def visitExprParenthesis(self, ctx):
         return self.visit(ctx.expr())
@@ -147,19 +167,22 @@ class Interpreter(GrammarVisitor):
             raise TypeError(f"{type(val)} has not final nodes")
 
 
-    def visitExprGerReachable(self, ctx:GrammarParser.ExprGerReachableContext):
-            pass  # TODO: implement get reachable operation
+    def visitExprGerReachable(self, ctx:GrammarParser.ExprGerReachableContext) -> frozenset:
+        val = self.visit(ctx.children[1])
+        if not isinstance(val, EpsilonNFA):
+            raise TypeError(f"Cannot get reachable of type {type(val)}")
+        return frozenset(find_reachable(val))
 
     def visitExprGetVertices(self, ctx):
-        val = self.visit(ctx.children[1])
-        if isinstance(val, EpsilonNFA):
-            vertices = set()
-            for x in val.states:
-                assert isinstance(x, State)
-                vertices.add(x.value)
-            return frozenset(vertices)
-        else:
-            raise TypeError(f"{type(val)} does not have vertices")
+            val = self.visit(ctx.children[1])
+            if isinstance(val, EpsilonNFA):
+                vertices = set()
+                for x in val.states:
+                    assert isinstance(x, State)
+                    vertices.add(x.value)
+                return frozenset(vertices)
+            else:
+                raise TypeError(f"{type(val)} does not have vertices")
 
 
     def visitExprGetEdges(self, ctx:GrammarParser.ExprGetEdgesContext) -> frozenset:
@@ -195,6 +218,7 @@ class Interpreter(GrammarVisitor):
         graph = nx.nx_pydot.read_dot(path)
         fa = graph_to_nfa(graph, graph.nodes, graph.nodes)
         return fa
+
     def visitExprFiniteAutomata(self, ctx):
         val = self.visit(ctx.children[1])
         if isinstance(val, str):
@@ -205,11 +229,6 @@ class Interpreter(GrammarVisitor):
             return fa
         else:
             raise TypeError(f"{type(val)} cannot be a symbol")
-    def visitLiteral(self, ctx:GrammarParser.LiteralContext):
-        try:
-            return int(ctx.getText())
-        except:
-            return ctx.getText()
 
 
 

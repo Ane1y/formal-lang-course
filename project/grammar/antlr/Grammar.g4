@@ -34,8 +34,6 @@ LOAD : 'load';
 
 literal: INT | STRING;
 
-
-
 prog : (stmt DEL)* EOF;
 stmt : bind | print_expr | expr | lambda_expr;
 
@@ -44,8 +42,9 @@ print_expr : PRINT expr;
 pattern : var | LP pattern (',' pattern)* RP;
 lambda_expr : pattern ARROW expr | LP lambda_expr RP;
 
-set: LC RC | LC set_elem (COMMA set_elem)* RC;
-set_elem: literal | literal '..' literal;
+set: LC RC | LC setElem (COMMA setElem)* RC;
+setElem: literal                    # setElemLiteral
+        | literal '..' literal      # setElemRange;
 
 var : IDENT;
 val : literal | set;
