@@ -1,15 +1,17 @@
 import io
 
+import networkx as nx
 from antlr4 import *
 from typing import TextIO
 
 from pyformlang.finite_automaton import EpsilonNFA, State, Symbol
 
+from fsm import graph_to_nfa
 from grammar.antlr.GrammarParser import GrammarParser
 from grammar.antlr.GrammarVisitor import GrammarVisitor
 from grammar import Grammar
 from grammar.Grammar import parse_stream
-from regular_path_queries import intersect, union, concat
+from regular_path_queries import intersect, union, concat, get_transitive_closure
 
 
 class Interpreter(GrammarVisitor):
@@ -34,19 +36,21 @@ class Interpreter(GrammarVisitor):
             return self.memory[name]
         return 0
 
+    def visitSet(self, ctx):
+        tmp = set()
+        split = ctx.getText()[1:-1].split(',')
+        if split[0] != "":
+            for elem in split:
+                tmp.add(int(elem))
+        return frozenset(tmp)
+
     def visitVal(self, ctx):
-        if ctx.LITERAL():
-            try:
-                return int(ctx.LITERAL().getText())
-            except:
-                return ctx.LITERAL().getText()
-        elif ctx.SET():
-            tmp = set()
-            split = ctx.SET().getText()[1:-1].split(',')
-            if split[0] != "":
-                for elem in split:
-                    tmp.add(int(elem))
-            return frozenset(tmp)
+        if ctx.literal():
+            return self.visit(ctx.literal())
+        elif ctx.set_():
+            return self.visit(ctx.set_())
+        else:
+            raise TypeError(f"Invalid type {type(ctx)}")
 
     def visitExprParenthesis(self, ctx):
         return self.visit(ctx.expr())
@@ -58,11 +62,13 @@ class Interpreter(GrammarVisitor):
         return self.visit(ctx.val())
 
     def visitExprMap(self, ctx):
+        # todo: todo
         func = self.visit(ctx.lambda_expr())
         lst = self.visit(ctx.expr())
         return list(map(func, lst))
 
     def visitExprFilter(self, ctx):
+        # todo: todo
         func = self.visit(ctx.lambda_expr())
         lst = self.visit(ctx.expr())
         return list(filter(func, lst))
@@ -78,57 +84,85 @@ class Interpreter(GrammarVisitor):
         left = self.visit(ctx.expr(0))
         right = self.visit(ctx.expr(1))
         if not isinstance(left, EpsilonNFA) or not isinstance(right, EpsilonNFA):
-            raise TypeError(f"Cannot intersect {type(left)} and {type(right)}")
+            raise TypeError(f"Cannot get union of {type(left)} and {type(right)}")
         return union(left, right)
 
     def visitExprConcat(self, ctx:GrammarParser.ExprConcatContext) -> EpsilonNFA:
         left = self.visit(ctx.expr(0))
         right = self.visit(ctx.expr(1))
+        if not isinstance(left, EpsilonNFA) or not isinstance(right, EpsilonNFA):
+            raise TypeError(f"Cannot concatenate {type(left)} and {type(right)}")
         return concat(left, right)
 
     def visitExprKleene(self, ctx):
-        pass  # TODO: implement Kleene star operation
+        fa = self.visit(ctx.children[0])
+        if isinstance(fa, EpsilonNFA):
+            return get_transitive_closure(fa)
+        else:
+            raise TypeError(f"{type(fa)} is not a graph")
 
-    def visitExprTrans(self, ctx):
-        pass  # TODO: implement transitive closure operation
+    def visitExprSetStart(self, ctx: GrammarParser.ExprSetStartContext) -> EpsilonNFA:
+        vertices, graph = self._get_vertices_and_graph(ctx)
+        for state in graph.start_states.copy():
+            graph.remove_start_state(state)
+        for vertex in vertices:
+            graph.add_start_state(vertex)
+        return graph
 
-    def visitExprSetStart(self, ctx):
-        pass  # TODO: implement set start operation
+    def visitExprSetFinal(self, ctx: GrammarParser.ExprSetFinalContext) -> EpsilonNFA:
+        vertices, graph = self._get_vertices_and_graph(ctx)
+        for state in graph.final_states.copy():
+            graph.remove_final_state(state)
+        for vertex in vertices:
+            graph.add_sfinal_state(vertex)
+        return graph
 
-    def visitExprSetFinal(self, ctx):
-        pass  # TODO: implement set final operation
 
     def visitExprAddStart(self, ctx: GrammarParser.ExprAddStartContext) -> EpsilonNFA:
-        vertices = self.visit(ctx.children[1])
+        vertices, graph = self._get_vertices_and_graph(ctx)
+        fa = graph.copy()
+        for x in vertices:
+            fa.add_start_state(x)
+        return fa
 
-        if not isinstance(vertices, frozenset):
-            raise TypeError(f"{type(vertices)} is not a set")
+    def visitExprAddFinals(self, ctx: GrammarParser.ExprAddFinalsContext) -> EpsilonNFA:
+        vertices, graph = self._get_vertices_and_graph(ctx)
+        fa = graph.copy()
+        for x in vertices:
+            fa.add_final_state(x)
+        return fa
 
-        graph = self.visit(ctx.children[5])
-        if isinstance(graph, EpsilonNFA):
-            fa = graph.copy()
-            for x in vertices:
-                fa.add_start_state(x)
-            return fa
+    def visitExprGetStart(self, ctx: GrammarParser.ExprGetStartContext) -> frozenset:
+        val = self.visit(ctx.children[1])
+        if isinstance(val, EpsilonNFA):
+            return frozenset(x.value for x in val.start_states)
         else:
-            raise TypeError(f"{type(graph)} does not allow to add vertices")
+            raise TypeError(f"{type(val)} has not start nodes")
 
-    def visitExprAddFinals(self, ctx):
-        pass  # TODO: implement add finals operation
+    def visitExprGetFinal(self, ctx: GrammarParser.ExprGetFinalContext) -> frozenset:
+        val = self.visit(ctx.children[1])
+        if isinstance(val, EpsilonNFA):
+            return frozenset(x.value for x in val.final_states)
+        else:
+            raise TypeError(f"{type(val)} has not final nodes")
 
-    def visitExprGetStart(self, ctx):
-        pass  # TODO: implement get start operation
 
-    def visitExprGetFinal(self, ctx):
-        pass  # TODO: implement get final operation
-
-    def visitExprGerReachable(self, ctx):
-        pass  # TODO: implement get reachable operation
+    def visitExprGerReachable(self, ctx:GrammarParser.ExprGerReachableContext):
+            pass  # TODO: implement get reachable operation
 
     def visitExprGetVertices(self, ctx):
-        pass  # TODO: implement get vertices operation
+        val = self.visit(ctx.children[1])
+        if isinstance(val, EpsilonNFA):
+            vertices = set()
+            for x in val.states:
+                assert isinstance(x, State)
+                vertices.add(x.value)
+            return frozenset(vertices)
+        else:
+            raise TypeError(f"{type(val)} does not have vertices")
 
-    def visitExprGetEdges(self, ctx:GrammarParser.ExprGetEdgesContext):
+
+    def visitExprGetEdges(self, ctx:GrammarParser.ExprGetEdgesContext) -> frozenset:
         val = self.visit(ctx.children[1])
         if isinstance(val, EpsilonNFA):
             items = set()
@@ -141,39 +175,68 @@ class Interpreter(GrammarVisitor):
             return frozenset(items)
         else:
             raise TypeError(f"Cannot get edges of type {type(val)}")
+
     def visitExprGetLabels(self, ctx):
-        pass  # TODO: implement get labels operation
+        val = self.visit(ctx.children[1])
+        if isinstance(val, EpsilonNFA):
+            items = set()
+            for fro, symb, to in val:
+                assert isinstance(symb.value, str)
+                items.add(symb.value)
+            return frozenset(items)
+        else:
+            raise TypeError(f"{type(val)} has not edges")
+
 
     def visitExprLoad(self, ctx):
-        pass  # TODO: implement load operation
-
+        path = ctx.children[1].getText()[1:-1]
+        if not isinstance(path, str):
+            raise TypeError(f"{type(path)} is not a string")
+        graph = nx.nx_pydot.read_dot(path)
+        fa = graph_to_nfa(graph, graph.nodes, graph.nodes)
+        return fa
     def visitExprFiniteAutomata(self, ctx):
-        return self.visit(ctx.finite_automata())
-
-    def visitFinite_automata(self, ctx):
-        val = ctx.LITERAL().getText()
+        val = self.visit(ctx.children[1])
         if isinstance(val, str):
             fa = EpsilonNFA()
             fa.add_start_state(State(0))
             fa.add_final_state(State(1))
             fa.add_transition(State(0), Symbol(val), State(1))
             return fa
-        # elif isinstance(val, EpsilonNFA):
-        #     return RSM(val.backend)
         else:
             raise TypeError(f"{type(val)} cannot be a symbol")
+    def visitLiteral(self, ctx:GrammarParser.LiteralContext):
+        try:
+            return int(ctx.getText())
+        except:
+            return ctx.getText()
+
+
+
     def visitLambda_expr(self, ctx):
         if ctx.ARROW():
             params = [ctx.pattern().getText()]
             body = lambda x: x # TODO: implement lambda body evaluation
             return lambda x: body(x)
 
+    def _get_vertices_and_graph(self, ctx) -> tuple:
+        vertices = self.visit(ctx.children[1])
+
+        if not isinstance(vertices, frozenset):
+            raise TypeError(f"{type(vertices)} is not a set")
+
+        graph = self.visit(ctx.children[3])
+        if not isinstance(graph, EpsilonNFA):
+            raise TypeError(f"{type(graph)} does not allow to add vertices")
+
+        return vertices, graph
+
 def interpret(program: GrammarParser.ProgContext, writer: TextIO):
-    # error_visitor = Grammar.ErrorVisitor()
-    # error_visitor.visit(program)
-    # if error_visitor.has_error:
-    #     print("Error visitor find error", file=writer)
-    #     return
+    error_visitor = Grammar.ErrorVisitor()
+    error_visitor.visit(program)
+    if error_visitor.has_error:
+        print("Error visitor find error", file=writer)
+        return
 
     exec_visitor = Interpreter(writer)
     try:

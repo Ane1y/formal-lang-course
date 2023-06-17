@@ -29,7 +29,7 @@ def graph_to_nfa(
     :return: Nondeterministic finite automaton from given graph
     """
 
-    nfa = fa.NondeterministicFiniteAutomaton.from_networkx(graph)
+    nfa = fa.NondeterministicFiniteAutomaton(graph)
     states = nfa.states
 
     if start_states is None:
@@ -37,15 +37,6 @@ def graph_to_nfa(
 
     if final_states is None:
         final_states = states
-
-    if not start_states.issubset(states):
-        raise AttributeError(
-            f"Start states are invalid: {start_states.difference(states)}"
-        )
-    if not final_states.issubset(states):
-        raise AttributeError(
-            f"Final states are invalid: {final_states.difference(states)}"
-        )
 
     for s in start_states:
         nfa.add_start_state(s)

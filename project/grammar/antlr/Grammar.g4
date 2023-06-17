@@ -10,7 +10,6 @@ RC : '}';
 OR : '|';
 ARROW : '->';
 KLEENE : '*';
-TRANS : '<<';
 CONCAT: '++';
 QUOTES: '"';
 COMMA : ',';
@@ -33,12 +32,8 @@ GET_EDGES : 'get_edges';
 GET_LABELS : 'get_labels';
 LOAD : 'load';
 
-INT: [0-9]+;
-LITERAL: INT | STRING;
-ELEM: LITERAL | LITERAL '..' LITERAL;
-SET: LC RC | LC ELEM (COMMA ELEM)* RC;
-IDENT : [a-zA-Z][a-zA-Z_0-9]*;
-STRING: QUOTES (IDENT | INT | ' ' | '.')* QUOTES;
+literal: INT | STRING;
+
 
 
 prog : (stmt DEL)* EOF;
@@ -48,9 +43,12 @@ bind : VAR var ASSIGN expr;
 print_expr : PRINT expr;
 pattern : var | LP pattern (',' pattern)* RP;
 lambda_expr : pattern ARROW expr | LP lambda_expr RP;
-finite_automata : FA LITERAL;
+
+set: LC RC | LC set_elem (COMMA set_elem)* RC;
+set_elem: literal | literal '..' literal;
+
 var : IDENT;
-val : LITERAL | SET;
+val : literal | set;
 
 
 expr : LP expr RP                   # exprParenthesis
@@ -62,7 +60,6 @@ expr : LP expr RP                   # exprParenthesis
   | expr OR expr                    # exprOr
   | expr CONCAT expr                # exprConcat
   | expr KLEENE                     # exprKleene
-  | expr TRANS expr                 # exprTrans
   | SET_START expr OF  expr         # exprSetStart
   | SET_FINAL expr OF expr          # exprSetFinal
   | ADD_START expr OF expr          # exprAddStart
@@ -74,7 +71,12 @@ expr : LP expr RP                   # exprParenthesis
   | GET_EDGES expr                  # exprGetEdges
   | GET_LABELS expr                 # exprGetLabels
   | LOAD STRING                     # exprLoad
-  | finite_automata                 # exprFiniteAutomata;
+  | FA literal                      # exprFiniteAutomata;
 
 
-WS: [ \t\n\r]+ -> channel(HIDDEN);
+WS: [ \t\n\r\u000C] -> skip;
+STRING: QUOTES (IDENT | INT | ' ' | '.')* QUOTES;
+
+INT: [0-9]+;
+IDENT : [a-zA-Z][a-zA-Z_0-9]*;
+

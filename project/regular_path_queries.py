@@ -156,3 +156,15 @@ def concat(fa1: EpsilonNFA, fa2: EpsilonNFA) -> EpsilonNFA:
         fa.add_final_state((1, node.value))
 
     return fa
+
+
+def get_transitive_closure(fa: EpsilonNFA) -> EpsilonNFA:
+    """
+    Computes the transitive closure of given automaton
+    :param fa: finite automaton
+    :return: the transitive closure of given automaton
+    """
+    for s in fa.start_states:
+        for f in fa.final_states:
+            fa.add_transition(f, Epsilon(), s)
+    return fa
