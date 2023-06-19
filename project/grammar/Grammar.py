@@ -1,7 +1,7 @@
-from project.grammar.GrammarVisitor import GrammarVisitor
-from project.grammar.GrammarLexer import GrammarLexer
-from project.grammar.GrammarParser import GrammarParser
-from project.grammar.GrammarListener import GrammarListener
+from grammar.antlr.GrammarVisitor import GrammarVisitor
+from grammar.antlr.GrammarLexer import GrammarLexer
+from grammar.antlr.GrammarParser import GrammarParser
+from grammar.antlr.GrammarListener import GrammarListener
 
 from antlr4 import *
 from antlr4.tree.Tree import TerminalNodeImpl

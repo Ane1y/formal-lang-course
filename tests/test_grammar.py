@@ -3,7 +3,7 @@ import sys
 
 import pytest
 
-from project.grammar.grammar import check, generate_dot_description
+from project.grammar.Grammar import check, generate_dot_description
 
 
 @pytest.mark.parametrize(
