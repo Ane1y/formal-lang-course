@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 import networkx as nx
 from antlr4 import *
-from typing import TextIO, Tuple
+from typing import TextIO, Tuple, List, Dict, Any, Callable
 
 from pyformlang.finite_automaton import EpsilonNFA, State, Symbol
 
@@ -15,16 +15,90 @@ from grammar.Grammar import parse_stream
 from regular_path_queries import intersect, union, concat, get_transitive_closure, find_reachable
 
 
+class Function:
+    def __init__(self):
+        self.raw_body : GrammarParser.ExprContext
+        self.variables : [[]]
+        self.to_process : Any
 
+    def _bind_variables(self):
+        pass
+    def _execute(self):
+        self._bind_variables()
+        return self.raw_body
+    # def execute_map(self):
+    #     self._execute()
+    #     return self.raw_body
+    #
+    # def execute_filter(self):
+    #     self._execute()
+    #     return self.raw_body
 class Interpreter(GrammarVisitor):
+
     def __init__(self, writer : TextIO):
-        self.memory = {}
+        self.func : Function = Function()
+        self._memory = {}
+        self._args = []
         self.writer = writer
 
+    def visitExprMap(self, ctx):
+        val = self.visit(ctx.children[2])
+        if not isinstance(val, frozenset):
+            raise TypeError(f"{type(val)} is not a set")
+        variables = []
+        variables.append(self.visit(ctx.children[0]))
+        return self.visit(ctx.children[1])
+
+    def _bind(self, pattern, value):
+        if type(pattern[0]) == list:
+            self._bind_set(pattern, value)
+        else:
+            self._bind_var(pattern, value)
+    def _bind_var(self, var, value: Any):
+        self._memory[var[0]] = value
+
+    def _bind_set(self, pattern, value):
+        for p, val in zip(pattern.description, value):
+            self._bind_var(p, value)
+
+    def visitExprFilter(self, ctx):
+        to_processed = self.visit(ctx.children[2])
+        if not isinstance(to_processed, frozenset):
+            raise TypeError(f"{type(to_processed)} is not a set")
+        self._args = []
+        # save the names of variables to be bound
+        # if (isinstance (ctx.children[1].children[0], GrammarParser.SimplePatternContext):
+        self._args.append(self.visit(ctx.children[1].children[0]))
+
+        backup = self._memory.copy()
+        result = set()
+        for arg in to_processed:
+            self._bind(self._args, arg)
+            if self.visit(ctx.children[1]):
+                result.add(arg)
+
+        self._memory = backup
+        return frozenset(result)
+
+    def visitSimplePattern(self, ctx:GrammarParser.SimplePatternContext):
+        if ctx.var():
+            return ctx.var().getText()
+
+    def visitTuplePattern(self, ctx:GrammarParser.TuplePatternContext):
+        result = []
+        for child in ctx.pattern():
+            if isinstance(child, GrammarParser.SimplePatternContext):
+                result.append(self.visitSimplePattern(child))
+            elif isinstance(child, GrammarParser.TuplePatternContext):
+                result.append(self.visitTuplePattern(child))
+        return result
+
+    def visitLambda_expr(self, ctx):
+        return self.visit(ctx.children[2])
     def visitBind(self, ctx):
         name = ctx.var().getText()
         value = self.visit(ctx.expr())
-        self.memory[name] = value
+        self._memory[name] = value
         return value
 
     def visitPrint_expr(self, ctx):
@@ -34,8 +108,8 @@ class Interpreter(GrammarVisitor):
 
     def visitVar(self, ctx):
         name = ctx.IDENT().getText()
-        if name in self.memory:
-            return self.memory[name]
+        if name in self._memory:
+            return self._memory[name]
         return 0
 
     def visitLiteral(self, ctx:GrammarParser.LiteralContext) -> int | str:
@@ -81,17 +155,6 @@ class Interpreter(GrammarVisitor):
     def visitExprVal(self, ctx):
         return self.visit(ctx.val())
 
-    def visitExprMap(self, ctx):
-        # todo: todo
-        func = self.visit(ctx.lambda_expr())
-        lst = self.visit(ctx.expr())
-        return list(map(func, lst))
-
-    def visitExprFilter(self, ctx):
-        # todo: todo
-        func = self.visit(ctx.lambda_expr())
-        lst = self.visit(ctx.expr())
-        return list(filter(func, lst))
 
     def visitExprAnd(self, ctx):
         left = self.visit(ctx.expr(0))
@@ -230,13 +293,16 @@ class Interpreter(GrammarVisitor):
         else:
             raise TypeError(f"{type(val)} cannot be a symbol")
 
+    def visitExprIn(self, ctx:GrammarParser.ExprInContext) -> bool:
+        source = self.visit(ctx.children[2])
+        if not isinstance(source, frozenset):
+            raise TypeError(
+                f"The second operand is {type(source)} is not a set"
+            )
+        find = self.visit(ctx.children[0])
 
+        return find in source
 
-    def visitLambda_expr(self, ctx):
-        if ctx.ARROW():
-            params = [ctx.pattern().getText()]
-            body = lambda x: x # TODO: implement lambda body evaluation
-            return lambda x: body(x)
 
     def _get_vertices_and_graph(self, ctx) -> tuple:
         vertices = self.visit(ctx.children[1])

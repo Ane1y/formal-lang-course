@@ -13,6 +13,7 @@ KLEENE : '*';
 CONCAT: '++';
 QUOTES: '"';
 COMMA : ',';
+IN: 'in';
 // Keywords
 MAP : 'map';
 FILTER : 'filter';
@@ -39,7 +40,10 @@ stmt : bind | print_expr | expr | lambda_expr;
 
 bind : VAR var ASSIGN expr;
 print_expr : PRINT expr;
-pattern : var | LP pattern (',' pattern)* RP;
+
+pattern : var                               # simplePattern
+        | LP pattern (',' pattern)* RP      # tuplePattern;
+
 lambda_expr : pattern ARROW expr | LP lambda_expr RP;
 
 set: LC RC | LC setElem (COMMA setElem)* RC;
@@ -70,8 +74,8 @@ expr : LP expr RP                   # exprParenthesis
   | GET_EDGES expr                  # exprGetEdges
   | GET_LABELS expr                 # exprGetLabels
   | LOAD STRING                     # exprLoad
-  | FA literal                      # exprFiniteAutomata;
-
+  | FA literal                      # exprFiniteAutomata
+  | expr IN expr                    # exprIn;
 
 WS: [ \t\n\r\u000C] -> skip;
 STRING: QUOTES (IDENT | INT | ' ' | '.')* QUOTES;
